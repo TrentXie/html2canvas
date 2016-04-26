@@ -89,7 +89,36 @@ module.exports = function(ownerDocument, containerDocument, width, height, optio
                             documentClone.documentElement.style.position = 'absolute';
                         }
                     }
-                    resolve(container);
+                    //loadImage again, when imgage is appended, ios won't load it
+                    var imgs= that.contentDocument.getElementsByTagName('img'),
+                      imgsSrc = []
+                    ;
+                    for(var i = 0;i<imgs.length;i++){
+                        if(imgs[i].hasAttribute('data-html2canvas-ignore')) imgsSrc.push(imgs[i].src);
+                    }
+                    var loadImg = function(imgsSrc, callback){
+                        var index = 0;
+                        var len = imgsSrc.length;
+                        var img = new Image();
+                        var load = function(){
+                            img.src = imgsSrc[index];
+                            img.onload = function() {
+                                index ++ ;
+                                if (index < len) {
+                                    load();
+                                }else{
+                                    callback()
+                                }
+                            }
+                        }
+                        if(len > 0){
+                            load();
+                        }
+                    }
+                    loadImg(imgsSrc,function(){
+                      resolve(container);
+                    });
+
                 }
             }, 50);
         };
